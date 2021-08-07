@@ -8,7 +8,7 @@ In the project directory, you can run:
 
 Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
 
-We recommend using a local [signaling server](https://github.com/libp2p/js-libp2p-webrtc-star) for development purpose.
+It's recommended using a local [signaling server](https://github.com/libp2p/js-libp2p-webrtc-star) for development purpose.
 
 ### `npm install --global libp2p-webrtc-star`
 
