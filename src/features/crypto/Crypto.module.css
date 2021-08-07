@@ -1,0 +1,8 @@
+.red {
+  color: red;
+  /* transition: color 1s; */
+}
+.black {
+  color: black;
+  transition: color 1s;
+}

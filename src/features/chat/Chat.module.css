@@ -1,0 +1,19 @@
+.delete {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  cursor: pointer;
+  color: white;
+}
+.alignRight {
+  left: 48%;
+}
+.alignLeft {
+}
+.containerWrapper {
+  background-color: #f4f5fb;
+  min-height: 100vh;
+}
+.textRight {
+  text-align: right;
+}
