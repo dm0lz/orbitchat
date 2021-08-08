@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { HashRouter as Router, Switch, Route, Link } from "react-router-dom";
 import { connect } from "react-redux";
-import logo from "./logo.svg";
 import { Counter } from "./features/counter/Counter";
 import { Chat } from "./features/chat/Chat";
 import { Home } from "./features/home/Home";

@@ -25,17 +25,23 @@ export const createUser = createAsyncThunk(
       const existingUser = users.find(
         (user) => user.username === payload.username
       );
+      const peerId = await payload.orbit.ipfs.id();
       if (existingUser) {
-        const peerId = await payload.orbit.ipfs.id();
         if (existingUser.peerId === peerId.id) {
           return { username: existingUser.username };
         } else {
           obj.dispatch(usernameError("Username already exists"));
           return { username: "" };
         }
+      } else {
+        const existingAccount = users.find((user) => user.peerId === peerId.id);
+        if (existingAccount) {
+          return { username: existingAccount.username };
+        } else {
+          const response = await createOrbitUser(payload);
+          return response;
+        }
       }
-      const response = await createOrbitUser(payload);
-      return response;
     } catch (error) {
       return obj.dispatch(usernameError(error.message));
     }

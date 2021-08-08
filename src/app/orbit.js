@@ -59,10 +59,6 @@ export const orbitInstance = async () => {
       "/orbitdb/zdpuB2wKeHGiVM9GK8vXeiRgadAshDbfik1yRByyAqFGu1vX4/orbitchat.users",
       options
     );
-    const eventsDb = await orbitdb.open(
-      "/orbitdb/zdpuAobdDUHrpWrLpPoZAGrH2TLWYpmeAha5ySxbnvHyW51dP/orbitchat.events",
-      options
-    );
     // const db = await orbitdb.open(
     //   "/orbitdb/zdpuAwcCyQtPjEKLzgnDqo44WeMtLuQQnmwBzUMxMQgev3KfH/orbit-db.messages",
     //   {
@@ -86,8 +82,7 @@ export const orbitInstance = async () => {
 
     await messagesDb.load();
     await usersDb.load();
-    await eventsDb.load();
-    return { messagesDb, usersDb, eventsDb, ipfs };
+    return { messagesDb, usersDb, ipfs };
   } catch (error) {
     console.log(error);
   }

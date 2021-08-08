@@ -3,8 +3,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { createUser, destroyUser, usernameError } from "./homeSlice";
 import { useHistory } from "react-router-dom";
 
-// import styles from "./Todo.module.css";
-
 export function Home(props) {
   const dispatch = useDispatch();
   const [username, setUsername] = useState("");

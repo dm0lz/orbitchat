@@ -2,22 +2,22 @@ import React, { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useHistory } from "react-router-dom";
 import styled from "styled-components";
+import Room from "ipfs-pubsub-room";
 import {
   addMessage,
   getMessages,
   fetchMessages,
   removeMessage,
   addPeer,
-  fetchEvents,
+  removePeer,
   addEvent,
-  updatePeers,
 } from "./chatSlice";
 import { fetchUsers } from "../home/homeSlice";
 import styles from "./Chat.module.css";
-// import { useInterval } from "../../hooks/useInterval";
 import moment from "moment";
 import { store } from "../../app/store";
 import { userSelector } from "../home/homeSlice";
+import Timer from "./timer";
 
 const groupBy = (items, key) =>
   items.reduce(
@@ -29,13 +29,13 @@ const groupBy = (items, key) =>
   );
 
 const ChatMessagesWrapper = styled.div`
-  max-height: 550px;
+  max-height: 450px;
   overflow-y: scroll;
 `;
 
 const InputWrapper = styled.div`
   position: fixed;
-  bottom: 20px;
+  bottom: 40px;
   width: 75%;
   background-color: #f4f5fb;
   @media (max-width: 660px) {
@@ -55,66 +55,77 @@ const AvatarWrapper = styled.div`
 `;
 
 export function Chat(props) {
+  const [input, setInput] = useState("");
+  const messagesEndRef = useRef(null);
+  const room = useRef(null);
+  const dispatch = useDispatch();
+  const history = useHistory();
   const messages = useSelector(getMessages);
   const username = useSelector(userSelector);
-  const peers = useSelector((state) => state.chat.peers);
   const users = useSelector((state) => state.home.users);
+  const peers = useSelector((state) => state.chat.peers);
   const events = useSelector((state) => state.chat.events);
-  const groupedEvents = groupBy(events, "username");
   let peerUsers = peers.map((peer) =>
     users.find((user) => user.peerId === peer)
   );
   peerUsers = peerUsers.filter((user) => user);
-  const typing = peerUsers.map((user) => {
-    if (groupedEvents[user.username]) {
-      const isTyping = groupedEvents[user.username][0].action === "FOCUS_IN";
-      return isTyping ? user.username : null;
-    }
-    return null;
-  });
-  const typingPeers = typing.filter((el) => el);
-  const dispatch = useDispatch();
-  const [input, setInput] = useState("");
-  const history = useHistory();
-  const { messagesDb, usersDb, eventsDb, ipfs } = props.orbit;
-  const messagesEndRef = useRef(null);
+  const getTypingPeers = (peerUsers, events) => {
+    const groupedEvents = groupBy(events, "peerId");
+    const typing = peerUsers.map((user) => {
+      if (groupedEvents[user.peerId]) {
+        const isTyping = groupedEvents[user.peerId][0].event === "FOCUS_IN";
+        return isTyping ? user.username : null;
+      }
+      return null;
+    });
+    return typing.filter((el) => el);
+  };
+  const typingPeers = getTypingPeers(peerUsers, events);
+  const { messagesDb, usersDb, ipfs } = props.orbit;
   window.store = store;
   window.addMessage = addMessage;
   window.orbit = props.orbit;
   // window.store.dispatch(window.addMessage({orbit: window.orbit.messagesDb, message: "from console", username: "doe"}))
-
-  const handleInputChange = (event) => {
-    setInput(event.target.value);
+  window.onbeforeunload = async (event) => {
+    return await room.current.leave();
   };
 
   useEffect(() => {
-    if (eventsDb && Object.keys(eventsDb).length !== 0) {
-      dispatch(fetchEvents(eventsDb));
-      eventsDb.events.on("replicated", (address) => {
-        console.log("events replicated");
-        dispatch(fetchEvents(eventsDb));
+    if (!username.length) {
+      history.push("/");
+    }
+  }, [username]);
+
+  useEffect(() => {
+    if (ipfs && Object.keys(ipfs).length !== 0) {
+      room.current = new Room(ipfs, "orbit-chat");
+      room.current.on("peer joined", (peer) => {
+        dispatch(addPeer(peer));
+        dispatch(fetchUsers(usersDb));
+      });
+      room.current.on("peer left", (peer) => {
+        dispatch(removePeer(peer));
+      });
+      room.current.on("message", (message) => {
+        const payload = {
+          event: message.data.toString(),
+          peerId: message.from,
+        };
+        dispatch(addEvent(payload));
       });
     }
-  }, [eventsDb]);
+    return async () => {
+      if (room.current) {
+        return await room.current.leave();
+      }
+    };
+  }, [ipfs]);
 
   useEffect(() => {
     if (usersDb && Object.keys(usersDb).length !== 0) {
       dispatch(fetchUsers(usersDb));
       usersDb.events.on("replicated", (address) => {
-        console.log("users replicated");
         dispatch(fetchUsers(usersDb));
-      });
-      usersDb.events.on("replicate", (address) => {
-        console.log("users replicate");
-      });
-      usersDb.events.on("peer", (peer) => {
-        console.log("user new peer detected");
-        console.log(peer);
-        dispatch(addPeer(peer));
-      });
-      usersDb.events.on("peer.exchanged", (peer, address, heads) => {
-        console.log("user peer exchanged");
-        dispatch(addPeer(peer));
       });
     }
   }, [usersDb]);
@@ -123,25 +134,8 @@ export function Chat(props) {
     if (messagesDb && Object.keys(messagesDb).length !== 0) {
       dispatch(fetchMessages(messagesDb));
       messagesDb.events.on("replicated", (address) => {
-        console.log("feed replicated");
         dispatch(fetchMessages(messagesDb));
       });
-      messagesDb.events.on("replicate", (address) => {
-        console.log("feed replicate");
-      });
-      messagesDb.events.on("peer", (peer) => {
-        console.log("feed new peer detected");
-        console.log(peer);
-        dispatch(addPeer(peer));
-      });
-      messagesDb.events.on("peer.exchanged", (peer, address, heads) => {
-        console.log("feed peer exchanged");
-        dispatch(addPeer(peer));
-      });
-      // const interval = setInterval(() => {
-      //   dispatch(fetchMessages(messagesDb));
-      // }, 6000);
-      // return () => clearInterval(interval);
     }
   }, [messagesDb]);
 
@@ -149,24 +143,9 @@ export function Chat(props) {
     scrollToBottom();
   }, [messages]);
 
-  useEffect(() => {
-    if (username.length === 0) {
-      history.push("/");
-    }
-  }, [username]);
-
-  // useEffect(() => {
-  //   if (ipfs && Object.keys(ipfs).length !== 0) {
-  //     (async (dispatch) => {
-  //       const interval = setInterval(async () => {
-  //         const swarmPeers = await ipfs.swarm.peers();
-  //         const peerIds = swarmPeers.map((peer) => peer.peer);
-  //         dispatch(updatePeers(peerIds));
-  //       }, 10000);
-  //       return () => clearInterval(interval);
-  //     })(dispatch);
-  //   }
-  // }, [ipfs]);
+  const handleInputChange = (event) => {
+    setInput(event.target.value);
+  };
 
   const inputSubmit = () => {
     if (input.length && username.length) {
@@ -190,11 +169,11 @@ export function Chat(props) {
   };
 
   const focusIn = () => {
-    dispatch(addEvent({ orbit: eventsDb, action: "FOCUS_IN", username }));
+    room.current.broadcast("FOCUS_IN");
   };
 
   const focusOut = () => {
-    dispatch(addEvent({ orbit: eventsDb, action: "FOCUS_OUT", username }));
+    room.current.broadcast("FOCUS_OUT");
   };
 
   const scrollToBottom = () => {
@@ -212,8 +191,15 @@ export function Chat(props) {
         <div className="col-sm-2 col-md-1"></div>
         <div className="col-sm-8 col-md-10">
           <h3>
-            Orbit Chat - {peers.length} connected peers :{" "}
-            {peerUsers.map((peer) => peer.username).join(", ")}
+            Orbit Chat -{" "}
+            {peers.length ? (
+              <span>
+                {peers.length} connected peers :{" "}
+                {peerUsers.map((peer) => peer.username).join(", ")}
+              </span>
+            ) : (
+              <Timer />
+            )}
           </h3>
           <div>
             <br />
@@ -245,7 +231,7 @@ export function Chat(props) {
                         className={`btn btn-danger ${styles.delete}`}
                       >
                         <i
-                          class="bi-trash"
+                          className="bi-trash"
                           onClick={remove}
                           hash={item.hash}
                         ></i>

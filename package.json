@@ -10,6 +10,7 @@
     "@testing-library/user-event": "^7.1.2",
     "bootstrap": "^5.0.2",
     "ipfs": "^0.55.4",
+    "ipfs-pubsub-room": "dai-shi/ipfs-pubsub-room#fix/for-libp2p-0-31",
     "moment": "^2.29.1",
     "orbit-db": "^0.26.1",
     "react": "^17.0.2",
@@ -17,6 +18,7 @@
     "react-redux": "^7.2.3",
     "react-router-dom": "^5.2.0",
     "react-scripts": "4.0.3",
+    "react-timer-hook": "^3.0.4",
     "react-websocket": "^2.1.0",
     "styled-components": "^5.3.0"
   },

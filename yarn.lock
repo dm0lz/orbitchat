@@ -7097,6 +7097,13 @@ humble-localstorage@^1.4.2:
     has-localstorage "^1.0.1"
     localstorage-memory "^1.0.1"
 
+hyperdiff@^2.0.5:
+  version "2.0.8"
+  resolved "https://registry.yarnpkg.com/hyperdiff/-/hyperdiff-2.0.8.tgz#3b316a00ce9d109165bef60511ac9e6d0106eae3"
+  dependencies:
+    debug "~4.3.1"
+    lodash "~4.17.19"
+
 iconv-lite@0.4.24, iconv-lite@^0.4.4:
   version "0.4.24"
   resolved "https://registry.yarnpkg.com/iconv-lite/-/iconv-lite-0.4.24.tgz#2022b4b25fbddc21d2f524974a474aafe733908b"
@@ -7726,6 +7733,15 @@ ipfs-pubsub-peer-monitor@~0.0.5:
   resolved "https://registry.yarnpkg.com/ipfs-pubsub-peer-monitor/-/ipfs-pubsub-peer-monitor-0.0.10.tgz#42b148ed53858a2c9391ca7730f9b5b50f753a0d"
   dependencies:
     p-forever "^2.1.0"
+
+ipfs-pubsub-room@dai-shi/ipfs-pubsub-room#fix/for-libp2p-0-31:
+  version "2.0.1"
+  resolved "https://codeload.github.com/dai-shi/ipfs-pubsub-room/tar.gz/91eb04a804a14a4c0a8d54af17a31a7e1d999a92"
+  dependencies:
+    hyperdiff "^2.0.5"
+    it-pipe "^1.1.0"
+    lodash.clonedeep "^4.5.0"
+    uint8arrays "^2.1.5"
 
 ipfs-repo-migrations@^8.0.0:
   version "8.0.0"
@@ -10022,6 +10038,10 @@ lodash._reinterpolate@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/lodash._reinterpolate/-/lodash._reinterpolate-3.0.0.tgz#0ccf2d89166af03b3663c796538b75ac6e114d9d"
 
+lodash.clonedeep@^4.5.0:
+  version "4.5.0"
+  resolved "https://registry.yarnpkg.com/lodash.clonedeep/-/lodash.clonedeep-4.5.0.tgz#e23f3f9c4f8fbdde872529c1071857a086e5ccef"
+
 lodash.get@^4.4.2:
   version "4.4.2"
   resolved "https://registry.yarnpkg.com/lodash.get/-/lodash.get-4.4.2.tgz#2d177f652fa31e939b4438d5341499dfa3825e99"
@@ -10055,7 +10075,7 @@ lodash.uniq@^4.5.0:
   version "4.5.0"
   resolved "https://registry.yarnpkg.com/lodash.uniq/-/lodash.uniq-4.5.0.tgz#d0225373aeb652adc1bc82e4945339a842754773"
 
-"lodash@>=3.5 <5", lodash@^4.17.11, lodash@^4.17.14, lodash@^4.17.15, lodash@^4.17.19, lodash@^4.17.20, lodash@^4.17.5:
+"lodash@>=3.5 <5", lodash@^4.17.11, lodash@^4.17.14, lodash@^4.17.15, lodash@^4.17.19, lodash@^4.17.20, lodash@^4.17.5, lodash@~4.17.19:
   version "4.17.21"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.21.tgz#679591c564c3bffaae8454cf0b3df370c3d6911c"
 
@@ -12985,6 +13005,10 @@ react-scripts@4.0.3:
     workbox-webpack-plugin "5.1.4"
   optionalDependencies:
     fsevents "^2.1.3"
+
+react-timer-hook@^3.0.4:
+  version "3.0.4"
+  resolved "https://registry.yarnpkg.com/react-timer-hook/-/react-timer-hook-3.0.4.tgz#13089b62cc81c6dd0d2bd904cd54add668089c4b"
 
 react-websocket@^2.1.0:
   version "2.1.0"
