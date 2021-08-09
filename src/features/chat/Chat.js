@@ -18,6 +18,7 @@ import moment from "moment";
 import { store } from "../../app/store";
 import { userSelector } from "../home/homeSlice";
 import Timer from "./timer";
+import useWindowDimensions from "../../hooks/useWindowDimensions";
 
 const groupBy = (items, key) =>
   items.reduce(
@@ -56,6 +57,8 @@ const AvatarWrapper = styled.div`
 
 export function Chat(props) {
   const [input, setInput] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
+  const { height, width } = useWindowDimensions();
   const messagesEndRef = useRef(null);
   const room = useRef(null);
   const dispatch = useDispatch();
@@ -89,6 +92,10 @@ export function Chat(props) {
   window.onbeforeunload = async (event) => {
     return await room.current.leave();
   };
+
+  useEffect(() => {
+    setIsMobile(width < 1200);
+  }, [width]);
 
   useEffect(() => {
     if (!username.length) {
@@ -191,7 +198,7 @@ export function Chat(props) {
         <div className="col-sm-2 col-md-1"></div>
         <div className="col-sm-8 col-md-10">
           <h3>
-            Orbit Chat -{" "}
+            {username} -{" "}
             {peers.length ? (
               <span>
                 {peers.length} connected peers :{" "}
@@ -207,8 +214,12 @@ export function Chat(props) {
               {orderedMessages.map((item, index) => (
                 <div key={item.hash}>
                   <div
-                    className={`card w-50 ${
-                      index % 2 === 0 ? styles.alignRight : styles.alignLeft
+                    className={`card ${isMobile ? "w-75" : "w-50"} ${
+                      index % 2 === 0
+                        ? isMobile
+                          ? styles.alignRightMobile
+                          : styles.alignRight
+                        : styles.alignLeft
                     } m-3`}
                   >
                     <div className={`card-body `}>

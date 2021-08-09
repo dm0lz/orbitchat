@@ -28,32 +28,25 @@ class App extends React.Component {
               <a className="navbar-brand" href="#">
                 OrbitChat
               </a>
-              <div className="collapse navbar-collapse" id="navbarNav">
-                <ul className="navbar-nav">
-                  <li className="nav-item active">
-                    <Link to="/" className="nav-link">
-                      Home
-                    </Link>
-                  </li>
-                  <li className="nav-item">
-                    <Link to="/chat" className="nav-link">
-                      chat
-                    </Link>
-                  </li>
-                  <li className="nav-item">
-                    <Link to="/counter" className="nav-link">
-                      counter
-                    </Link>
-                  </li>
-                  <li className="nav-item">
-                    <Link to="/crypto" className="nav-link">
-                      crypto
-                    </Link>
-                  </li>
-                </ul>
-              </div>
-              <span className="navbar-text username">
-                {this.props.username}
+              <span className="navbar-text">
+                <Link to="/" className="nav-link">
+                  Home
+                </Link>
+              </span>
+              <span className="navbar-text">
+                <Link to="/crypto" className="nav-link">
+                  crypto
+                </Link>
+              </span>
+              <span className="navbar-text">
+                <Link to="/counter" className="nav-link">
+                  counter
+                </Link>
+              </span>
+              <span className="navbar-text">
+                <Link to="/chat" className="nav-link">
+                  chat
+                </Link>
               </span>
             </nav>
 

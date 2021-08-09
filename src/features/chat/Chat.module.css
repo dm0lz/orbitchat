@@ -8,6 +8,9 @@
 .alignRight {
   left: 48%;
 }
+.alignRightMobile {
+  left: 18%;
+}
 .alignLeft {
 }
 .containerWrapper {
