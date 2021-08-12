@@ -58,9 +58,12 @@ const AvatarWrapper = styled.div`
 export function Chat(props) {
   const [input, setInput] = useState("");
   const [isMobile, setIsMobile] = useState(false);
-  const { height, width } = useWindowDimensions();
+  const { width } = useWindowDimensions();
   const messagesEndRef = useRef(null);
+  const videoRef = useRef(null);
+  const rtcPeerConnection = useRef(null);
   const room = useRef(null);
+  const webrtcRoom = useRef(null);
   const dispatch = useDispatch();
   const history = useHistory();
   const messages = useSelector(getMessages);
@@ -88,9 +91,105 @@ export function Chat(props) {
   window.store = store;
   window.addMessage = addMessage;
   window.orbit = props.orbit;
+  window.rtcPeerConnection = rtcPeerConnection;
   // window.store.dispatch(window.addMessage({orbit: window.orbit.messagesDb, message: "from console", username: "doe"}))
   window.onbeforeunload = async (event) => {
     return await room.current.leave();
+  };
+
+  useEffect(() => {
+    if (ipfs && Object.keys(ipfs).length !== 0) {
+      webrtcRoom.current = new Room(ipfs, "orbit-chat-webrtc");
+      webrtcRoom.current.on("peer joined", (peer) => {});
+      webrtcRoom.current.on("peer left", (peer) => {});
+      webrtcRoom.current.on("message", async (payload) => {
+        const obj = JSON.parse(payload.data.toString());
+        let { desc, candidate, user } = obj;
+        if (user === username) return;
+        try {
+          if (desc) {
+            if (desc.type === "offer") {
+              desc = { type: "offer", sdp: atob(desc.sdp) };
+              await rtcPeerConnection.current.setRemoteDescription(desc);
+              const answer = await rtcPeerConnection.current.createAnswer();
+              await rtcPeerConnection.current.setLocalDescription(answer);
+              webrtcRoom.current.broadcast(
+                encodeSdp(
+                  rtcPeerConnection.current.localDescription.sdp,
+                  "answer"
+                )
+              );
+            } else if (desc.type === "answer") {
+              desc = { type: "answer", sdp: atob(desc.sdp) };
+              await rtcPeerConnection.current.setRemoteDescription(
+                new RTCSessionDescription(desc)
+              );
+            } else {
+              console.log("Unsupported SDP type.");
+            }
+          } else if (candidate) {
+            await rtcPeerConnection.current.addIceCandidate(
+              new RTCIceCandidate(candidate)
+            );
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      });
+      return async () => {
+        if (webrtcRoom.current) {
+          return await webrtcRoom.current.leave();
+        }
+      };
+    }
+  }, [ipfs]);
+
+  useEffect(() => {
+    rtcPeerConnection.current = new RTCPeerConnection({
+      iceServers: [
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun.services.mozilla.com" },
+      ],
+    });
+    rtcPeerConnection.current.onicecandidate = async (e) => {
+      if (e.candidate) {
+        webrtcRoom.current.broadcast(
+          JSON.stringify({ candidate: e.candidate, user: username })
+        );
+      }
+    };
+    rtcPeerConnection.current.onaddstream = (e) => {
+      if (videoRef.current.srcObject) return;
+      videoRef.current.srcObject = e.stream;
+    };
+    rtcPeerConnection.current.onnegotiationneeded = async (e) => {
+      const offer = await rtcPeerConnection.current.createOffer();
+      await rtcPeerConnection.current.setLocalDescription(offer);
+      webrtcRoom.current.broadcast(
+        encodeSdp(rtcPeerConnection.current.localDescription.sdp, "offer")
+      );
+    };
+    return () => {
+      rtcPeerConnection.current.close();
+    };
+  }, [peers]);
+
+  const streamVideo = async () => {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: true,
+    });
+    rtcPeerConnection.current.addStream(stream);
+  };
+
+  const encodeSdp = (sdp, type) => {
+    const obj = {
+      desc: {
+        type: type,
+        sdp: btoa(sdp),
+      },
+      user: username,
+    };
+    return JSON.stringify(obj);
   };
 
   useEffect(() => {
@@ -197,6 +296,8 @@ export function Chat(props) {
       <div className="row">
         <div className="col-sm-2 col-md-1"></div>
         <div className="col-sm-8 col-md-10">
+          <video autoPlay ref={videoRef}></video>
+          <button onClick={streamVideo}>Stream video</button>
           <h3>
             {username} -{" "}
             {peers.length ? (
