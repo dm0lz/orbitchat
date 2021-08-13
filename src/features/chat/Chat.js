@@ -19,6 +19,7 @@ import { store } from "../../app/store";
 import { userSelector } from "../home/homeSlice";
 import Timer from "./timer";
 import useWindowDimensions from "../../hooks/useWindowDimensions";
+import { PeerId } from "ipfs";
 
 const groupBy = (items, key) =>
   items.reduce(
@@ -58,12 +59,12 @@ const AvatarWrapper = styled.div`
 export function Chat(props) {
   const [input, setInput] = useState("");
   const [isMobile, setIsMobile] = useState(false);
+  const [rtcPeerConnections, setRtcPeerConnections] = useState([]);
   const { width } = useWindowDimensions();
   const messagesEndRef = useRef(null);
-  const videoRef = useRef(null);
-  const rtcPeerConnection = useRef(null);
-  const room = useRef(null);
+  const chatEventRoom = useRef(null);
   const webrtcRoom = useRef(null);
+  const videoRefs = useRef([]);
   const dispatch = useDispatch();
   const history = useHistory();
   const messages = useSelector(getMessages);
@@ -91,10 +92,12 @@ export function Chat(props) {
   window.store = store;
   window.addMessage = addMessage;
   window.orbit = props.orbit;
-  window.rtcPeerConnection = rtcPeerConnection;
+  window.rtcPeerConnections = rtcPeerConnections;
+  window.webrtcRoom = webrtcRoom;
   // window.store.dispatch(window.addMessage({orbit: window.orbit.messagesDb, message: "from console", username: "doe"}))
   window.onbeforeunload = async (event) => {
-    return await room.current.leave();
+    rtcPeerConnections.map((pc) => pc.close());
+    return await chatEventRoom.current.leave();
   };
 
   useEffect(() => {
@@ -102,117 +105,28 @@ export function Chat(props) {
       webrtcRoom.current = new Room(ipfs, "orbit-chat-webrtc");
       webrtcRoom.current.on("peer joined", (peer) => {});
       webrtcRoom.current.on("peer left", (peer) => {});
-      webrtcRoom.current.on("message", async (payload) => {
-        const obj = JSON.parse(payload.data.toString());
-        let { desc, candidate, user } = obj;
-        if (user === username) return;
-        try {
-          if (desc) {
-            if (desc.type === "offer") {
-              desc = { type: "offer", sdp: atob(desc.sdp) };
-              await rtcPeerConnection.current.setRemoteDescription(desc);
-              const answer = await rtcPeerConnection.current.createAnswer();
-              await rtcPeerConnection.current.setLocalDescription(answer);
-              webrtcRoom.current.broadcast(
-                encodeSdp(
-                  rtcPeerConnection.current.localDescription.sdp,
-                  "answer"
-                )
-              );
-            } else if (desc.type === "answer") {
-              desc = { type: "answer", sdp: atob(desc.sdp) };
-              await rtcPeerConnection.current.setRemoteDescription(
-                new RTCSessionDescription(desc)
-              );
-            } else {
-              console.log("Unsupported SDP type.");
-            }
-          } else if (candidate) {
-            await rtcPeerConnection.current.addIceCandidate(
-              new RTCIceCandidate(candidate)
-            );
-          }
-        } catch (err) {
-          console.error(err);
-        }
-      });
-      return async () => {
-        if (webrtcRoom.current) {
-          return await webrtcRoom.current.leave();
-        }
-      };
+      webrtcRoom.current.on("message", handleRtcRoomMessage);
     }
-  }, [ipfs]);
-
-  useEffect(() => {
-    rtcPeerConnection.current = new RTCPeerConnection({
-      iceServers: [
-        { urls: "stun:stun.l.google.com:19302" },
-        { urls: "stun:stun.services.mozilla.com" },
-      ],
-    });
-    rtcPeerConnection.current.onicecandidate = async (e) => {
-      if (e.candidate) {
-        webrtcRoom.current.broadcast(
-          JSON.stringify({ candidate: e.candidate, user: username })
-        );
-      }
-    };
-    rtcPeerConnection.current.onaddstream = (e) => {
-      if (videoRef.current.srcObject) return;
-      videoRef.current.srcObject = e.stream;
-    };
-    rtcPeerConnection.current.onnegotiationneeded = async (e) => {
-      const offer = await rtcPeerConnection.current.createOffer();
-      await rtcPeerConnection.current.setLocalDescription(offer);
-      webrtcRoom.current.broadcast(
-        encodeSdp(rtcPeerConnection.current.localDescription.sdp, "offer")
-      );
-    };
-    return () => {
-      rtcPeerConnection.current.close();
-    };
-  }, [peers]);
-
-  const streamVideo = async () => {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: true,
-    });
-    rtcPeerConnection.current.addStream(stream);
-  };
-
-  const encodeSdp = (sdp, type) => {
-    const obj = {
-      desc: {
-        type: type,
-        sdp: btoa(sdp),
-      },
-      user: username,
-    };
-    return JSON.stringify(obj);
-  };
-
-  useEffect(() => {
-    setIsMobile(width < 1200);
-  }, [width]);
-
-  useEffect(() => {
-    if (!username.length) {
-      history.push("/");
-    }
-  }, [username]);
+  }, [ipfs, rtcPeerConnections]);
 
   useEffect(() => {
     if (ipfs && Object.keys(ipfs).length !== 0) {
-      room.current = new Room(ipfs, "orbit-chat");
-      room.current.on("peer joined", (peer) => {
+      chatEventRoom.current = new Room(ipfs, "orbit-chat-event");
+      chatEventRoom.current.on("peer joined", async (peer) => {
         dispatch(addPeer(peer));
         dispatch(fetchUsers(usersDb));
+        const pc = createRtcPeerConnection(peer);
+        if (!rtcPeerConnections.includes(pc)) {
+          setRtcPeerConnections((rtcPeerConnections) => [
+            ...rtcPeerConnections,
+            pc,
+          ]);
+        }
       });
-      room.current.on("peer left", (peer) => {
+      chatEventRoom.current.on("peer left", (peer) => {
         dispatch(removePeer(peer));
       });
-      room.current.on("message", (message) => {
+      chatEventRoom.current.on("message", (message) => {
         const payload = {
           event: message.data.toString(),
           peerId: message.from,
@@ -221,8 +135,9 @@ export function Chat(props) {
       });
     }
     return async () => {
-      if (room.current) {
-        return await room.current.leave();
+      if (chatEventRoom.current) {
+        await chatEventRoom.current.leave();
+        return rtcPeerConnections.map((pc) => pc.close());
       }
     };
   }, [ipfs]);
@@ -248,6 +163,111 @@ export function Chat(props) {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    setIsMobile(width < 1200);
+  }, [width]);
+
+  useEffect(() => {
+    if (!username.length) {
+      history.push("/");
+    }
+  }, [username]);
+
+  const handleRtcRoomMessage = async (payload) => {
+    const connection = rtcPeerConnections.find(
+      (pc) => pc.peerId === payload.from
+    );
+    if (!connection) return;
+    const pc = connection.pc;
+    const obj = JSON.parse(payload.data.toString());
+    let { desc, candidate, user, from, to } = obj;
+    const peerId = await ipfs.id();
+    if (peerId.id !== to) return;
+    if (user === username) return;
+    try {
+      if (desc) {
+        if (desc.type === "offer") {
+          desc = { type: "offer", sdp: atob(desc.sdp) };
+          await pc.setRemoteDescription(desc);
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          const payload = await encodeSdp(
+            pc.localDescription.sdp,
+            "answer",
+            from
+          );
+          webrtcRoom.current.broadcast(payload);
+        } else if (desc.type === "answer") {
+          desc = { type: "answer", sdp: atob(desc.sdp) };
+          await pc.setRemoteDescription(new RTCSessionDescription(desc));
+        } else {
+          console.log("Unsupported SDP type.");
+        }
+      } else if (candidate) {
+        await pc.addIceCandidate(new RTCIceCandidate(candidate));
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const createRtcPeerConnection = (peer) => {
+    const pc = new RTCPeerConnection({
+      iceServers: [
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun.services.mozilla.com" },
+      ],
+    });
+    pc.onicecandidate = async (e) => {
+      if (e.candidate) {
+        const from = await ipfs.id();
+        webrtcRoom.current.broadcast(
+          JSON.stringify({
+            candidate: e.candidate,
+            user: username,
+            from: from.id,
+            to: peer,
+          })
+        );
+      }
+    };
+    pc.onaddstream = (e) => {
+      const videos = videoRefs.current.filter((ref) => ref.srcObject === null);
+      videos[0].srcObject = e.stream;
+    };
+    pc.onnegotiationneeded = async (e) => {
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      const payload = await encodeSdp(pc.localDescription.sdp, "offer", peer);
+      webrtcRoom.current.broadcast(payload);
+    };
+    return { peerId: peer, pc };
+  };
+
+  const streamVideo = async () => {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: true,
+    });
+    rtcPeerConnections.forEach((pc) => {
+      pc.pc.addStream(stream);
+    });
+  };
+
+  const encodeSdp = async (sdp, type, peer) => {
+    const from = await ipfs.id();
+    const obj = {
+      desc: {
+        type: type,
+        sdp: btoa(sdp),
+      },
+      user: username,
+      from: from.id,
+      to: peer,
+    };
+    return JSON.stringify(obj);
+  };
+  window.encodeSdp = encodeSdp;
 
   const handleInputChange = (event) => {
     setInput(event.target.value);
@@ -275,17 +295,28 @@ export function Chat(props) {
   };
 
   const focusIn = () => {
-    room.current.broadcast("FOCUS_IN");
+    chatEventRoom.current.broadcast("FOCUS_IN");
   };
 
   const focusOut = () => {
-    room.current.broadcast("FOCUS_OUT");
+    chatEventRoom.current.broadcast("FOCUS_OUT");
   };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({
       behavior: "smooth",
     });
+  };
+
+  const setVideoRef = (ref) => {
+    if (ref === null) return;
+    const peerId = ref.getAttribute("peerid");
+    const existing = videoRefs.current.find(
+      (ref) => ref.getAttribute("peerid") === peerId
+    );
+    if (!existing) {
+      videoRefs.current = [...videoRefs.current, ref];
+    }
   };
 
   const orderedMessages = messages
@@ -296,7 +327,16 @@ export function Chat(props) {
       <div className="row">
         <div className="col-sm-2 col-md-1"></div>
         <div className="col-sm-8 col-md-10">
-          <video autoPlay ref={videoRef}></video>
+          {rtcPeerConnections.map((pc, index) => (
+            <video
+              autoPlay
+              ref={setVideoRef}
+              peerid={pc.peerId}
+              key={index}
+              width="150px"
+              height="150px"
+            ></video>
+          ))}
           <button onClick={streamVideo}>Stream video</button>
           <h3>
             {username} -{" "}
