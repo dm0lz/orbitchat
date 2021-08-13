@@ -96,7 +96,7 @@ export function Chat(props) {
   window.webrtcRoom = webrtcRoom;
   // window.store.dispatch(window.addMessage({orbit: window.orbit.messagesDb, message: "from console", username: "doe"}))
   window.onbeforeunload = async (event) => {
-    rtcPeerConnections.map((pc) => pc.close());
+    rtcPeerConnections.map((pc) => pc.pc.close());
     return await chatEventRoom.current.leave();
   };
 
@@ -137,7 +137,7 @@ export function Chat(props) {
     return async () => {
       if (chatEventRoom.current) {
         await chatEventRoom.current.leave();
-        return rtcPeerConnections.map((pc) => pc.close());
+        return rtcPeerConnections.map((pc) => pc.pc.close());
       }
     };
   }, [ipfs]);

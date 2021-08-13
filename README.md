@@ -1,4 +1,4 @@
-This project is a serverless Dapp chat using [IPFS](https://github.com/ipfs/ipfs) and [Orbit-db](https://github.com/orbitdb/orbit-db/). It was bootstrapped with [Create React App](https://github.com/facebook/create-react-app), using the [Redux](https://redux.js.org/) and [Redux Toolkit](https://redux-toolkit.js.org/) template. It can take some time for the peers discovery to happen. You can check it [here](https://ipfs.io/ipfs/Qmd9wKamuT3kV9JBmHrZCHPjUHBRbhjkiwLfKDdxSHeukh).
+This project is a serverless Dapp chat using [IPFS](https://github.com/ipfs/ipfs) and [Orbit-db](https://github.com/orbitdb/orbit-db/). It was bootstrapped with [Create React App](https://github.com/facebook/create-react-app), using the [Redux](https://redux.js.org/) and [Redux Toolkit](https://redux-toolkit.js.org/) template. It can take some time for the peers discovery to happen. You can check it [here](https://ipfs.io/ipfs/QmbBZ6xuLXe6an2viyaJWajtuf8pMKTfpnYSFcjCoE8JKd).
 
 ## Available Scripts
 
