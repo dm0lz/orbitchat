@@ -232,9 +232,11 @@ export function Chat(props) {
         );
       }
     };
-    pc.onaddstream = (e) => {
+    pc.ontrack = (e) => {
       const videos = videoRefs.current.filter((ref) => ref.srcObject === null);
-      videos[0].srcObject = e.stream;
+      if (videos.length) {
+        videos[0].srcObject = e.streams[0];
+      }
     };
     pc.onnegotiationneeded = async (e) => {
       const offer = await pc.createOffer();
@@ -250,7 +252,7 @@ export function Chat(props) {
       video: true,
     });
     rtcPeerConnections.forEach((pc) => {
-      pc.pc.addStream(stream);
+      stream.getTracks().forEach((track) => pc.pc.addTrack(track, stream));
     });
   };
 
