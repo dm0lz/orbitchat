@@ -19,7 +19,6 @@ import { store } from "../../app/store";
 import { userSelector } from "../home/homeSlice";
 import Timer from "./timer";
 import useWindowDimensions from "../../hooks/useWindowDimensions";
-import { PeerId } from "ipfs";
 
 const groupBy = (items, key) =>
   items.reduce(
@@ -97,6 +96,7 @@ export function Chat(props) {
   // window.store.dispatch(window.addMessage({orbit: window.orbit.messagesDb, message: "from console", username: "doe"}))
   window.onbeforeunload = async (event) => {
     rtcPeerConnections.map((pc) => pc.pc.close());
+    await webrtcRoom.current.leave();
     return await chatEventRoom.current.leave();
   };
 
@@ -116,7 +116,10 @@ export function Chat(props) {
         dispatch(addPeer(peer));
         dispatch(fetchUsers(usersDb));
         const pc = createRtcPeerConnection(peer);
-        if (!rtcPeerConnections.includes(pc)) {
+        const existing = rtcPeerConnections.find(
+          (peer) => peer.peerId === pc.peerId
+        );
+        if (!existing) {
           setRtcPeerConnections((rtcPeerConnections) => [
             ...rtcPeerConnections,
             pc,
