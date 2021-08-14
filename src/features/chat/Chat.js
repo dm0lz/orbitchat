@@ -235,10 +235,13 @@ export function Chat(props) {
         );
       }
     };
-    pc.ontrack = (e) => {
+    pc.ontrack = async (e) => {
       const videos = videoRefs.current.filter((ref) => ref.srcObject === null);
       if (videos.length) {
         videos[0].srcObject = e.streams[0];
+        if (videos[0].paused) {
+          await videos[0].play();
+        }
       }
     };
     pc.onnegotiationneeded = async (e) => {
@@ -253,6 +256,7 @@ export function Chat(props) {
   const streamVideo = async () => {
     const stream = await navigator.mediaDevices.getUserMedia({
       video: true,
+      audio: true,
     });
     rtcPeerConnections.forEach((pc) => {
       stream.getTracks().forEach((track) => pc.pc.addTrack(track, stream));
@@ -335,6 +339,9 @@ export function Chat(props) {
           {rtcPeerConnections.map((pc, index) => (
             <video
               autoPlay
+              controls
+              playsinline
+              muted
               ref={setVideoRef}
               peerid={pc.peerId}
               key={index}
@@ -342,7 +349,13 @@ export function Chat(props) {
               height="150px"
             ></video>
           ))}
-          <button onClick={streamVideo}>Stream video</button>
+          <button
+            onClick={streamVideo}
+            className="btn btn-success"
+            disabled={!peers.length}
+          >
+            Stream video
+          </button>
           <h3>
             {username} -{" "}
             {peers.length ? (
