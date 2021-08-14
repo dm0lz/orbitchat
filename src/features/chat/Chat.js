@@ -128,6 +128,9 @@ export function Chat(props) {
       });
       chatEventRoom.current.on("peer left", (peer) => {
         dispatch(removePeer(peer));
+        setRtcPeerConnections((rtcPeerConnections) =>
+          rtcPeerConnections.filter((item) => item.peerId !== peer)
+        );
       });
       chatEventRoom.current.on("message", (message) => {
         const payload = {
@@ -340,7 +343,7 @@ export function Chat(props) {
             <video
               autoPlay
               controls
-              playsinline
+              playsInline
               muted
               ref={setVideoRef}
               peerid={pc.peerId}

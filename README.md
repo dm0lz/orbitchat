@@ -1,4 +1,4 @@
-This project is a serverless video chat using [WebRTC](https://developer.mozilla.org/en-US/docs/Web/API/WebRTC_API), [IPFS](https://github.com/ipfs/ipfs) and [Orbit-db](https://github.com/orbitdb/orbit-db/). It was bootstrapped with [Create React App](https://github.com/facebook/create-react-app), using the [Redux](https://redux.js.org/) and [Redux Toolkit](https://redux-toolkit.js.org/) template. It can take some time for the peers discovery to happen so be patient. You can check it [here](https://ipfs.io/ipfs/QmfKZBXwTqmzM87fC41gsGJwuNvZm4XTd1BbXTsEMbcDyo).
+This project is a serverless video chat using [WebRTC](https://developer.mozilla.org/en-US/docs/Web/API/WebRTC_API), [IPFS](https://github.com/ipfs/ipfs) and [Orbit-db](https://github.com/orbitdb/orbit-db/). It was bootstrapped with [Create React App](https://github.com/facebook/create-react-app), using the [Redux](https://redux.js.org/) and [Redux Toolkit](https://redux-toolkit.js.org/) template. It can take some time for the peers discovery to happen so be patient. You can check it [here](https://ipfs.io/ipfs/QmW8HFtgCCB3ccDgvbAaRJbNb91jEW6Ki2uMHZb2mTbsv6).
 
 ## Available Scripts
 
