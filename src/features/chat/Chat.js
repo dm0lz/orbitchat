@@ -95,22 +95,46 @@ export function Chat(props) {
   window.webrtcRoom = webrtcRoom;
   // window.store.dispatch(window.addMessage({orbit: window.orbit.messagesDb, message: "from console", username: "doe"}))
   window.onbeforeunload = async (event) => {
-    rtcPeerConnections.map((pc) => pc.pc.close());
+    await chatEventRoom.current.leave();
     await webrtcRoom.current.leave();
-    return await chatEventRoom.current.leave();
+    return rtcPeerConnections.map((pc) => pc.pc.close());
   };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  useEffect(() => {
+    setIsMobile(width < 1200);
+  }, [width]);
+
+  useEffect(() => {
+    if (!username.length) {
+      history.push("/");
+    }
+  }, [username]);
+
+  useEffect(() => {
+    if (usersDb && Object.keys(usersDb).length !== 0) {
+      dispatch(fetchUsers(usersDb));
+      usersDb.events.on("replicated", (address) => {
+        dispatch(fetchUsers(usersDb));
+      });
+    }
+  }, [usersDb]);
+
+  useEffect(() => {
+    if (messagesDb && Object.keys(messagesDb).length !== 0) {
+      dispatch(fetchMessages(messagesDb));
+      messagesDb.events.on("replicated", (address) => {
+        dispatch(fetchMessages(messagesDb));
+      });
+    }
+  }, [messagesDb]);
 
   useEffect(() => {
     if (ipfs && Object.keys(ipfs).length !== 0) {
       webrtcRoom.current = new Room(ipfs, "orbit-chat-webrtc");
-      webrtcRoom.current.on("peer joined", (peer) => {});
-      webrtcRoom.current.on("peer left", (peer) => {});
-      webrtcRoom.current.on("message", handleRtcRoomMessage);
-    }
-  }, [ipfs, rtcPeerConnections]);
-
-  useEffect(() => {
-    if (ipfs && Object.keys(ipfs).length !== 0) {
       chatEventRoom.current = new Room(ipfs, "orbit-chat-event");
       chatEventRoom.current.on("peer joined", async (peer) => {
         dispatch(addPeer(peer));
@@ -143,42 +167,17 @@ export function Chat(props) {
     return async () => {
       if (chatEventRoom.current) {
         await chatEventRoom.current.leave();
-        return rtcPeerConnections.map((pc) => pc.pc.close());
       }
+      if (webrtcRoom.current) {
+        await webrtcRoom.current.leave();
+      }
+      return rtcPeerConnections.map((pc) => pc.pc.close());
     };
   }, [ipfs]);
 
   useEffect(() => {
-    if (usersDb && Object.keys(usersDb).length !== 0) {
-      dispatch(fetchUsers(usersDb));
-      usersDb.events.on("replicated", (address) => {
-        dispatch(fetchUsers(usersDb));
-      });
-    }
-  }, [usersDb]);
-
-  useEffect(() => {
-    if (messagesDb && Object.keys(messagesDb).length !== 0) {
-      dispatch(fetchMessages(messagesDb));
-      messagesDb.events.on("replicated", (address) => {
-        dispatch(fetchMessages(messagesDb));
-      });
-    }
-  }, [messagesDb]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  useEffect(() => {
-    setIsMobile(width < 1200);
-  }, [width]);
-
-  useEffect(() => {
-    if (!username.length) {
-      history.push("/");
-    }
-  }, [username]);
+    webrtcRoom.current?.on("message", handleRtcRoomMessage);
+  }, [rtcPeerConnections]);
 
   const handleRtcRoomMessage = async (payload) => {
     const connection = rtcPeerConnections.find(
@@ -239,6 +238,10 @@ export function Chat(props) {
       }
     };
     pc.ontrack = async (e) => {
+      const existing = videoRefs.current.find(
+        (ref) => ref.srcObject?.id === e.streams[0].id
+      );
+      if (existing) return;
       const videos = videoRefs.current.filter((ref) => ref.srcObject === null);
       if (videos.length) {
         videos[0].srcObject = e.streams[0];
