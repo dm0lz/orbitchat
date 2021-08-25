@@ -71,6 +71,9 @@ export const homeSlice = createSlice({
     usersFetched: (state, action) => {
       state.users = action.payload;
     },
+    loadingStatus: (state, action) => {
+      state.status = action.payload;
+    },
     // setUser: {
     //   reducer(state, action) {
     //     state.username = action.payload.username;
@@ -107,7 +110,7 @@ export const homeSlice = createSlice({
   },
 });
 
-export const { usernameError, usersFetched } = homeSlice.actions;
+export const { usernameError, usersFetched, loadingStatus } = homeSlice.actions;
 
 export const userSelector = (state) => state.home.username;
 // We can also write thunks by hand, which may contain both sync and async logic.

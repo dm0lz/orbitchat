@@ -397,7 +397,7 @@ export function Chat(props) {
                           <strong>{item.username}</strong>
                         </div>
                       </AvatarWrapper>
-                      <p>{item.message}</p>
+                      <p className="chat-message">{item.message}</p>
                       <div className={styles.textRight}>
                         {formatDate(item.timestamp)}
                       </div>
@@ -436,7 +436,11 @@ export function Chat(props) {
                 onBlur={focusOut}
               />
               <hr />
-              <button onClick={inputSubmit} className="btn btn-success w-100">
+              <button
+                onClick={inputSubmit}
+                className="btn btn-success w-100"
+                id="chatSubmit"
+              >
                 Submit
               </button>
             </InputWrapper>

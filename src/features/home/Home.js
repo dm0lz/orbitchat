@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { createUser, destroyUser, usernameError } from "./homeSlice";
+import {
+  createUser,
+  destroyUser,
+  usernameError,
+  loadingStatus,
+} from "./homeSlice";
 import { useHistory } from "react-router-dom";
 
 export function Home(props) {
@@ -23,6 +28,13 @@ export function Home(props) {
 
   useEffect(() => {
     dispatch(usernameError(null));
+    if (username.length) {
+      if (orbit?.usersDb) {
+        dispatch(createUser({ username, orbit })).then(() => {
+          history.push("/chat");
+        });
+      }
+    }
   }, [orbit]);
 
   const handleOnChange = (event) => {
@@ -35,6 +47,7 @@ export function Home(props) {
         dispatch(createUser({ username, orbit }));
       } else {
         dispatch(usernameError("Loading database ..."));
+        dispatch(loadingStatus("loading"));
       }
     }
   };
@@ -46,7 +59,10 @@ export function Home(props) {
         <div className="col-sm-4 ">
           <h3>Enter Username</h3>
           {errors.length ? (
-            <div className="alert alert-danger alert-dismissible fade show">
+            <div
+              className="alert alert-danger alert-dismissible fade show"
+              id="alert"
+            >
               <div>
                 {errors.map((error, index) => (
                   <span key={index}>{error}</span>
@@ -66,7 +82,7 @@ export function Home(props) {
               <button
                 onClick={inputSubmit}
                 className="btn btn-success w-100"
-                // disabled={status === "loading"}
+                disabled={status === "loading"}
               >
                 Submit
               </button>
