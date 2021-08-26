@@ -5,20 +5,20 @@ import {
   destroyUser,
   usernameError,
   loadingStatus,
-} from "./homeSlice";
+} from "./loginSlice";
 import { useHistory } from "react-router-dom";
 
-export function Home(props) {
+export function Login(props) {
   const dispatch = useDispatch();
   const [username, setUsername] = useState("");
-  const userName = useSelector((state) => state.home.username);
-  const errors = useSelector((state) => state.home.errors);
-  const status = useSelector((state) => state.home.status);
+  const userName = useSelector((state) => state.login.username);
+  const errors = useSelector((state) => state.login.errors);
+  const status = useSelector((state) => state.login.status);
   const history = useHistory();
   const { orbit } = props;
 
   window.destroyUser = destroyUser;
-  // window.store.getState().home.users.map((user) => window.store.dispatch(window.destroyUser({orbit: window.orbit.usersDb, hash: user.hash})))
+  // window.store.getState().login.users.map((user) => window.store.dispatch(window.destroyUser({orbit: window.orbit.usersDb, hash: user.hash})))
 
   useEffect(() => {
     if (userName.length) {

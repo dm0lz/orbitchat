@@ -3,7 +3,7 @@ import { HashRouter as Router, Switch, Route, Link } from "react-router-dom";
 import { connect } from "react-redux";
 import { Counter } from "./features/counter/Counter";
 import { Chat } from "./features/chat/Chat";
-import { Home } from "./features/home/Home";
+import { Login } from "./features/login/Login";
 import { Crypto } from "./features/crypto/Crypto";
 import { orbitInstance } from "./app/orbit";
 import "./App.css";
@@ -26,11 +26,11 @@ class App extends React.Component {
           <div>
             <nav className="navbar navbar-expand-lg navbar-light bg-light">
               <a className="navbar-brand" href="#">
-                OrbitChat
+                DCHAT
               </a>
               <span className="navbar-text">
                 <Link to="/" className="nav-link">
-                  Home
+                  login
                 </Link>
               </span>
               <span className="navbar-text">
@@ -63,7 +63,7 @@ class App extends React.Component {
                 <Crypto />
               </Route>
               <Route path="/">
-                <Home orbit={this.state.orbit} />
+                <Login orbit={this.state.orbit} />
               </Route>
             </Switch>
           </div>
@@ -74,7 +74,7 @@ class App extends React.Component {
 }
 
 const mapStateToProps = (state) => ({
-  username: state.home.username,
+  username: state.login.username,
 });
 const mapDispatchToProps = () => {
   return {

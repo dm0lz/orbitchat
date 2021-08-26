@@ -12,11 +12,11 @@ import {
   removePeer,
   addEvent,
 } from "./chatSlice";
-import { fetchUsers } from "../home/homeSlice";
+import { fetchUsers } from "../login/loginSlice";
 import styles from "./Chat.module.css";
 import moment from "moment";
 import { store } from "../../app/store";
-import { userSelector } from "../home/homeSlice";
+import { userSelector } from "../login/loginSlice";
 import Timer from "./timer";
 import useWindowDimensions from "../../hooks/useWindowDimensions";
 
@@ -68,7 +68,7 @@ export function Chat(props) {
   const history = useHistory();
   const messages = useSelector(getMessages);
   const username = useSelector(userSelector);
-  const users = useSelector((state) => state.home.users);
+  const users = useSelector((state) => state.login.users);
   const peers = useSelector((state) => state.chat.peers);
   const events = useSelector((state) => state.chat.events);
   let peerUsers = peers.map((peer) =>
@@ -87,7 +87,7 @@ export function Chat(props) {
     return typing.filter((el) => el);
   };
   const typingPeers = getTypingPeers(peerUsers, events);
-  const { messagesDb, usersDb, ipfs } = props.orbit;
+  const { messagesDb, usersDb, ipfs } = Object(props.orbit);
   window.store = store;
   window.addMessage = addMessage;
   window.orbit = props.orbit;

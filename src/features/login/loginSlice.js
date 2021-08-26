@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { createOrbitUser, fetchOrbitUsers, removeOrbitUser } from "./homeAPI";
+import { createOrbitUser, fetchOrbitUsers, removeOrbitUser } from "./loginAPI";
 
 const initialState = {
   username: "",
@@ -9,7 +9,7 @@ const initialState = {
 };
 
 export const fetchUsers = createAsyncThunk(
-  "home/fetchUsers",
+  "login/fetchUsers",
   async (payload, obj) => {
     const response = await fetchOrbitUsers(payload);
     return response;
@@ -17,7 +17,7 @@ export const fetchUsers = createAsyncThunk(
 );
 
 export const createUser = createAsyncThunk(
-  "home/createUser",
+  "login/createUser",
   async (payload, obj) => {
     try {
       const users = await fetchOrbitUsers(payload.orbit.usersDb);
@@ -49,15 +49,15 @@ export const createUser = createAsyncThunk(
 );
 
 export const destroyUser = createAsyncThunk(
-  "home/destroyUser",
+  "login/destroyUser",
   async (payload, obj) => {
     const response = await removeOrbitUser(payload);
     return response;
   }
 );
 
-export const homeSlice = createSlice({
-  name: "home",
+export const loginSlice = createSlice({
+  name: "login",
   initialState,
   // The `reducers` field lets us define reducers and generate associated actions
   reducers: {
@@ -110,9 +110,10 @@ export const homeSlice = createSlice({
   },
 });
 
-export const { usernameError, usersFetched, loadingStatus } = homeSlice.actions;
+export const { usernameError, usersFetched, loadingStatus } =
+  loginSlice.actions;
 
-export const userSelector = (state) => state.home.username;
+export const userSelector = (state) => state.login.username;
 // We can also write thunks by hand, which may contain both sync and async logic.
 // Here's an example of conditionally dispatching actions based on current state.
 // export const incrementIfOdd = (amount) => (dispatch, getState) => {
@@ -122,4 +123,4 @@ export const userSelector = (state) => state.home.username;
 //   }
 // };
 
-export default homeSlice.reducer;
+export default loginSlice.reducer;
