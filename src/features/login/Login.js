@@ -11,6 +11,7 @@ import { useHistory } from "react-router-dom";
 export function Login(props) {
   const dispatch = useDispatch();
   const [username, setUsername] = useState("");
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const userName = useSelector((state) => state.login.username);
   const errors = useSelector((state) => state.login.errors);
   const status = useSelector((state) => state.login.status);
@@ -27,12 +28,14 @@ export function Login(props) {
   }, [userName]);
 
   useEffect(() => {
-    dispatch(usernameError(null));
-    if (username.length) {
-      if (orbit?.usersDb) {
-        dispatch(createUser({ username, orbit })).then(() => {
-          history.push("/chat");
-        });
+    if (isSubmitted) {
+      dispatch(usernameError(null));
+      if (username.length) {
+        if (orbit?.usersDb) {
+          dispatch(createUser({ username, orbit })).then(() => {
+            history.push("/chat");
+          });
+        }
       }
     }
   }, [orbit]);
@@ -43,6 +46,7 @@ export function Login(props) {
 
   const inputSubmit = () => {
     if (username.length) {
+      setIsSubmitted(true);
       if (orbit?.usersDb) {
         dispatch(createUser({ username, orbit }));
       } else {
