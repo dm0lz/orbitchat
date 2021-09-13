@@ -2,13 +2,14 @@
   "name": "orbitchat",
   "version": "0.1.0",
   "private": true,
-  "homepage": "./",
+  "homepage": "https://dm0lz.github.io/orbitchat/",
   "dependencies": {
     "@reduxjs/toolkit": "^1.5.1",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",
     "bootstrap": "^5.0.2",
+    "gh-pages": "^3.2.3",
     "ipfs": "^0.55.4",
     "ipfs-pubsub-room": "dai-shi/ipfs-pubsub-room#fix/for-libp2p-0-31",
     "moment": "^2.29.1",
@@ -25,6 +26,8 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
